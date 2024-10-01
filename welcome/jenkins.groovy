@@ -9,12 +9,56 @@ pipeline {
     }
 
     stages {
+        
+        stage('Wait for User Approval') {
+            steps {
+                script {
+                    // Wait for user interaction and store the result
+                    def userInput = input message: 'Is the application running successfully?',
+                                         parameters: [choice(name: 'Proceed', choices: 'Proceed\nAbort', description: 'Choose an option')]
+                    // Set a variable based on user input
+                    env.USER_CHOICE = userInput
+                }
+            }
+        }
+
+        stage('Continue the pipeline') {
+            // Run this stage ONLY! if the user chooses 'Proceed'
+
+            when {
+                expression { env.USER_CHOICE == 'Proceed' }
+            }
+            steps {
+                script {
+                    echo 'Continuing the pipeline...'
+                    // Wait for user interaction and store the result
+                    def gitInput = input message: 'Is the application running successfully?',
+                                         parameters: [string(name: 'url',  defaultValue: '', description: 'Enter URL GIT')]
+                    // Set a variable based on user input
+                    env.GIT_CHOICE = gitInput
+                }
+            }
+        }
+
+        stage('Abort the Pipeline') {
+            // Run this stage ONLY! if the user chooses 'Abort'
+            when {
+                expression { env.USER_CHOICE == 'Abort' }
+            }
+            steps {
+                script {
+                    error 'Pipeline aborted by the user'
+                }
+            }
+        }
+        
         stage('Clone Flask Project') {
             steps {
                 // Use the Git plugin to clone the repository
-                git branch: 'jenkins-workshop', url: 'https://github.com/NourHajYahia/devopshift-welcome.git'
+                git branch: 'jenkins-workshop', url: env.GIT_CHOICE
             }
         }
+        
 
         stage('Setup Python Environment and Install Dependencies') {
             steps {
@@ -56,8 +100,8 @@ pipeline {
                             done
                         fi
 
-                        echo "Starting Flask application on 0.0.0.0:5005..."
-                        nohup flask run --host=0.0.0.0 --port=5005 > flask_app.log 2>&1 &
+                        echo "Starting Flask application on 0.0.0.0:5001..."
+                        nohup flask run --host=0.0.0.0 --port=5001 > flask_app.log 2>&1 &
                         '''
                     }
                 }
