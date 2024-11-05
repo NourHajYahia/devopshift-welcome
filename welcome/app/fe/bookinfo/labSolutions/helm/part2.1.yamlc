@@ -17,7 +17,7 @@ reviews:
   image: docker.io/istio/examples-bookinfo-reviews-v1
 
 productpage:
-  replicas: 2
+  replicas: 1
   image: docker.io/istio/examples-bookinfo-productpage-v1
 
 
